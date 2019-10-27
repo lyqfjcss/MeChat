@@ -62,6 +62,9 @@ void recvThread(void* _ClientSocket)			 			//接收线程
 			case CLI_CMD_ERROR:
 								printf("一些意想不到的错误发生了\n");
 								break;
+			case CLI_CMD_SENF_OFFLINEMSG:
+								vReadOfflineRecord(&msg);
+								break;
 			case CLI_CMD_USEROFFLINE:
 								printf("对方不存在或不在线\n");
 								break;
@@ -321,8 +324,8 @@ void vChatToOne()
 		{
 			if(isChatOneOnline == 1)
 			{
-				printf("对方已不在群聊\n");
-				break;
+				printf("对方已不在群聊，对方将在下次上线时收到您的离线消息\n");
+				//break;
 			}
 			printf("你对 %s 说：%s\n",msg.m_toName,msg.m_mess);		
 			send(iClientSocket,&msg,sizeof(MsgData),0);
@@ -581,6 +584,7 @@ void vSecondMenuAction()
 		switch(actions)
 		{
 			case 3:printf("actions = %d\n",actions);vChatToAll();break;
+			case 6:vCheckOfflineRecord();break;
 			case 5:vSendLogoutMsg();flag = 1;break;		//未完成
 		}
 		
@@ -595,15 +599,41 @@ void vSecondMenuAction()
 	}
 }
 
+
+void vReadOfflineRecord(MsgData *_msg)
+{
+	printf("%s",_msg->m_time);
+	printf("%s",_msg->m_fromName);
+	printf("对你说：\t%s\n",_msg->m_mess);	
+}
+
+
 /****************************************************************************** 
-函数名称：vSendLogoutMsg 
-简要描述：发送离线消息（未完成）
+函数名称：vCheckOfflineRecord
+简要描述：发送查看离线聊天记录命令
 
 输入：
 输出：	  
 修改日志:2019-10-25 Tiandy 创建该函数 
 ******************************************************************************/
-void vSendLogoutMsg()			//未完成
+void vCheckOfflineRecord()			
+{
+	MsgData msg;	
+	msg.m_cmd = SER_CMD_CHK_OFFLINEMSG;
+	strcpy(msg.m_name,cUsrName);	
+	send(iClientSocket,&msg,sizeof(MsgData),0);	
+}
+
+
+/****************************************************************************** 
+函数名称：vSendLogoutMsg 
+简要描述：发送离线提醒
+
+输入：
+输出：	  
+修改日志:2019-10-25 Tiandy 创建该函数 
+******************************************************************************/
+void vSendLogoutMsg()			
 {
 	MsgData msg;	
 	msg.m_cmd = SER_CMD_LOGOUT;	

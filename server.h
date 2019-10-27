@@ -8,6 +8,7 @@
 #define SER_CMD_FILE_SEND	13
 #define SER_CMD_LOGOUT		15
 #define SER_CMD_RETURN		16
+#define SER_CMD_CHK_OFFLINEMSG	14
 
 
 //CMD_SEND_TO_CLIENT
@@ -20,6 +21,8 @@
 #define CLI_CMD_SAVE_FILE			15
 #define CLI_CMD_ERROR				-1
 #define CLI_CMD_USEROFFLINE			21
+#define CLI_CMD_SENF_OFFLINEMSG		7
+
 
 
 //Socket数据包
@@ -69,6 +72,13 @@ void vLinkOffline(int clientSocket);
 MyLink * initLink();
 int  iSocketInit();
 int  iSocketAccept(int serverSocket);
+void vCheckOfflineRecord(int _serverSocket, MsgData *_msg);
+void vSaveOfflineRecord(int _serverSocket, MsgData * _msg);
+char *pcGetTime();
+
+
+
+
 
 
 char IP[15];					

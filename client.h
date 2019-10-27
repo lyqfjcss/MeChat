@@ -8,6 +8,7 @@
 #define SER_CMD_FILE_SEND	13
 #define SER_CMD_LOGOUT		15
 #define SER_CMD_RETURN		16
+#define SER_CMD_CHK_OFFLINEMSG	14
 
 
 //CMD_RECV_FROM_SERVER
@@ -20,6 +21,8 @@
 #define CLI_CMD_SAVE_FILE			15
 #define CLI_CMD_ERROR				-1
 #define CLI_CMD_USEROFFLINE			21
+#define CLI_CMD_SENF_OFFLINEMSG		7
+
 
 #define PORT			7777
 
@@ -80,3 +83,7 @@ void vFirstMenuActions();
 char *pcMyfgets(char *data, int n);
 int  iSocketInit();
 int  iGetRand();
+void vReadOfflineRecord(MsgData *_msg);
+void vCheckOfflineRecord();
+
+

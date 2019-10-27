@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <time.h>
 #include "server.h"
 
 sqlite3 *db = NULL;//数据库
@@ -64,6 +65,9 @@ void vServiceThread(void* _clientSocket)
 						break;		//文件传输
 			case SER_CMD_LOGOUT:
 								vLinkOffline(clientSocket);
+						break;		//下线
+			case SER_CMD_CHK_OFFLINEMSG:
+								vCheckOfflineRecord(clientSocket, &msg);
 						break;		//下线
 			case SER_CMD_RETURN:
 								send(clientSocket,&msg,sizeof(MsgData),0);
@@ -563,9 +567,78 @@ void vChatToOne(int _serverSocket, MsgData *_msg)//私聊
 	if(flag == 0)				//在线
 	{
 		_msg->m_cmd = CLI_CMD_USR_OFFLINE;			//用户下线
+		vSaveOfflineRecord(_serverSocket, _msg);
 		send(_serverSocket,_msg,sizeof(MsgData),0);
 	}
 }
+
+typedef struct OfflineRecord
+{
+	char m_mess[1024];
+	char m_fromName[30];
+	char m_toName[30];
+	char m_time[30];
+	int  m_iClientSocket;
+}OfflineRecord;
+
+void vSaveOfflineRecord(int _serverSocket, MsgData * _msg)
+{
+	FILE *fp = fopen("OfflineRecord.txt","a+");
+	OfflineRecord temp;
+	
+	temp.m_iClientSocket = _serverSocket;
+	strcpy(temp.m_fromName,_msg->m_fromName);
+	strcpy(temp.m_toName,_msg->m_toName);
+	strcpy(temp.m_mess,_msg->m_mess);
+	strcpy(temp.m_time,pcGetTime());
+	fwrite(&temp,sizeof(OfflineRecord),1,fp);//将结构体直接写入文件
+
+	fclose(fp);
+}
+
+/****************************************************************************** 
+函数名称：pcGetTime 
+简要描述：获取时间函数  
+
+输入：
+输出：时间   
+修改日志:2019-10-25 Tiandy 创建该函数 
+******************************************************************************/ 
+char *pcGetTime()							
+{
+	time_t rawtime;
+    struct tm * timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+	return asctime(timeinfo);
+}
+
+
+void vCheckOfflineRecord(int _serverSocket, MsgData *_msg)
+{
+	MyLink *p = pH;
+	MsgData msg;
+	 
+	FILE *fp = fopen("OfflineRecord.txt","r");
+	OfflineRecord temp;
+	int ret = fread(&temp,sizeof(OfflineRecord),1,fp);			
+	while(ret > 0)
+	{
+		
+		if(strcmp(_msg->m_name, temp.m_toName) == 0)
+			{
+				msg.m_cmd = CLI_CMD_SENF_OFFLINEMSG;
+				strcpy(msg.m_toName, temp.m_toName);
+				strcpy(msg.m_fromName, temp.m_fromName);
+				strcpy(msg.m_mess, temp.m_mess);
+				strcpy(msg.m_time, temp.m_time);
+				send(_serverSocket, &msg, sizeof(MsgData), 0);
+			}
+		ret = fread(&temp,sizeof(OfflineRecord),1,fp);
+	}
+	fclose(fp);
+}
+
 
 /****************************************************************************** 
 函数名称：vClientCheckInChatUser
