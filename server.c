@@ -47,7 +47,7 @@ void vServiceThread(void* _clientSocket)
 						break;		//注册插入数据库1
 			case SER_CMD_LOGIN:
 								vLoginAccount(clientSocket,&msg);
-						break;		//登入验证2
+						break;		//登录验证2
 			case SER_CMD_GOURPC:
 								vChatToAll(clientSocket,&msg);
 						break;		//进入群聊3
@@ -272,7 +272,7 @@ int iCheckAccountState(MsgData *_msg)
 	while(p->next != NULL)
 	{
 		p = p->next;
-		if(strcmp(p->m_name,tempName) == 0)//检查链表,只要登入了就在链表中
+		if(strcmp(p->m_name,tempName) == 0)//检查链表,只要登录了就在链表中
 		{
 			return 0;	//已在线    	//修改昵称的话，链表中的name也要修改
 		}
@@ -359,7 +359,7 @@ int iLinkInsertOnlineUser(int _clientSocket,MsgData *_msg)//链表插入人员
 输出： 
 修改日志:2019-10-25 Tiandy 创建该函数 
 ******************************************************************************/
-void vLoginAccount(int _clientSocket,MsgData *_msg)//登入
+void vLoginAccount(int _clientSocket,MsgData *_msg)//登录
 {
 	char buf[200];
 	int nrow = 0;  
@@ -375,7 +375,7 @@ void vLoginAccount(int _clientSocket,MsgData *_msg)//登入
 	int mFlag = iCheckAccountState(_msg);//重复在线查询
 	if(mFlag == 0)//此人已在线
 	{
-		_msg->m_flag = 2;//已登入
+		_msg->m_flag = 2;//已登录
 	}
 	else if(mFlag == -1)//意外情况
 	{
@@ -406,7 +406,7 @@ void vLoginAccount(int _clientSocket,MsgData *_msg)//登入
 				}
 				else
 				{
-					printf("登入成功\n");	
+					printf("%s登录成功\n",_msg->m_name);	
 					_msg->m_flag = 1;					//正确flag	
 				}
 			}
@@ -616,7 +616,7 @@ char *pcGetTime()
 
 void vCheckOfflineRecord(int _serverSocket, MsgData *_msg)
 {
-	MyLink *p = pH;
+	//MyLink *p = pH;
 	MsgData msg;
 	 
 	FILE *fp = fopen("OfflineRecord.txt","r");

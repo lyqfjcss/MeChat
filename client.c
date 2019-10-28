@@ -90,11 +90,19 @@ void vSaveChatRecord(MsgData *_msg,int _flag)		//保存聊天记录分俩种，�
 	{
 		strcpy(temp.m_toName,"All");
 		strcpy(temp.m_fromName,_msg->m_name);
+		temp.m_flag = 1;
 	}
-	else
+	else if(_flag == 0)
 	{
 		strcpy(temp.m_toName,"you");
 		strcpy(temp.m_fromName,_msg->m_fromName);
+		temp.m_flag = 0;
+	}
+	else
+	{
+		strcpy(temp.m_toName,_msg->m_toName);
+		strcpy(temp.m_fromName,_msg->m_fromName);
+		temp.m_flag = 0;
 	}
 	strcpy(temp.m_mess,_msg->m_mess);
 	strcpy(temp.m_time,pcGetTime());
@@ -298,10 +306,15 @@ void vChatToOne()
 		
 		if(isChatOneOnline == 1)						
 		{
-			printf("在线中没有找到此人\n");		
+			vCheckChatRecord(0, oneName);
+			printf("-------------以上为历史消息-------------\n");
+			printf("在线中没有找到此人,将发送离线消息\n");
+			break;
 		}
 		else
 		{
+			vCheckChatRecord(0, oneName);
+			printf("-------------以上为历史消息-------------\n");
 			printf("您可以开始私聊了\n");
 			printf("输入back返回群聊\n");
 			break;		
@@ -329,6 +342,7 @@ void vChatToOne()
 			}
 			printf("你对 %s 说：%s\n",msg.m_toName,msg.m_mess);		
 			send(iClientSocket,&msg,sizeof(MsgData),0);
+			vSaveChatRecord(&msg, 2);
 		}
 		memset(tempMess,0,sizeof(tempMess));
 	}
@@ -342,17 +356,31 @@ void vChatToOne()
 输出：	  
 修改日志:2019-10-25 Tiandy 创建该函数 
 ******************************************************************************/
-void vCheckChatRecord()								
+void vCheckChatRecord(int _flag, char * _fromName)								
 {
-	FILE *fp = fopen("localChat.txt","r");
+	FILE *fp = fopen("localChat.txt","a+");
 	ChatRecord temp;
 	int ret = fread(&temp,sizeof(ChatRecord),1,fp);			//1为群聊的聊天记录
 	while(ret > 0)
 	{
-		printf("%s",temp.m_time);
-		printf("%s",temp.m_fromName);
-		printf(" 对%s",temp.m_toName);
-		printf("说：\t%s\n",temp.m_mess);	
+		if(_flag == 1 && temp.m_flag == 1)
+		{
+			printf("%s",temp.m_time);
+			printf("%s",temp.m_fromName);
+			printf(" 对%s",temp.m_toName);
+			printf("说：\t%s\n",temp.m_mess);	
+		}
+		else if(_flag == 0 && temp.m_flag == 0)
+		{
+			//if(((strcmp(_fromName, temp.m_fromName) == 0) && (strcmp(temp.m_toName, "you") == 0))  || (strcmp(temp.m_fromName, cUsrName) == 0))
+			if((strcmp(temp.m_fromName, _fromName) == 0) || (strcmp(temp.m_toName, _fromName) == 0))
+			{
+				printf("%s",temp.m_time);
+				printf("%s",temp.m_fromName);
+				printf(" 对%s",temp.m_toName);
+				printf("说：\t%s\n",temp.m_mess);
+			}
+		}
 		ret = fread(&temp,sizeof(ChatRecord),1,fp);
 	}
 	fclose(fp);
@@ -470,7 +498,7 @@ void vChatToAll()				//群聊功能
 		}
 		else if(strcmp(msg.m_mess,"q4") == 0)				//查看聊天记录
 		{
-			vCheckChatRecord();								//改为文件
+			vCheckChatRecord(1, "All");								//改为文件
 			//sleep(1);
 			printf("\n您已返回群聊\n");	
 		}
@@ -573,9 +601,9 @@ void vSecondMenuAction()
 	{	
 		//sleep(1);
 		printf("\t****************\n");
-		printf("\t3.进入群聊\n");
-		printf("\t6.离线消息接收\n");
-		printf("\t5.退出到登录界面\n");
+		printf("\t1.进入群聊\n");
+		printf("\t2.离线消息接收\n");
+		printf("\t3.退出到登录界面\n");
 		printf("\t****************\n");
 		
 		pcMyfgets(getWork, sizeof(getWork));
@@ -583,9 +611,9 @@ void vSecondMenuAction()
 		
 		switch(actions)
 		{
-			case 3:printf("actions = %d\n",actions);vChatToAll();break;
-			case 6:vCheckOfflineRecord();break;
-			case 5:vSendLogoutMsg();flag = 1;break;		//未完成
+			case 1:printf("actions = %d\n",actions);vCheckChatRecord(1, getWork);vChatToAll();break;
+			case 2:vCheckOfflineRecord();break;
+			case 3:vSendLogoutMsg();flag = 1;break;		
 		}
 		
 		if(flag == 1)
